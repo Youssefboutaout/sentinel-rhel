@@ -1,1 +1,170 @@
-# Sentinel-RHEL
+
+# 🛡️ Sentinel-RHEL
+
+**Autonomous infrastructure, storage and security management for Red Hat Enterprise Linux 10**
+---
+
+## Overview
+
+**Sentinel-RHEL** is a Python CLI tool and background daemon that automates routine Linux administration on RHEL 10. It monitors system health, extends LVM volumes before they fill up, audits security settings against CIS-style checks, and inspects network state, all from a single command-line interface.
+
+> **Why "Sentinel"?** It watches the system continuously and acts on problems before they become outages.
+
+<!-- Add a demo GIF or screenshot here: -->
+<!-- ![Sentinel demo](docs/demo.gif) -->
+
+---
+
+## Features
+
+| Module | Description |
+|---|---|
+| 🧠 **LVM Self-Healing** | Monitors logical volume usage and extends the volume and filesystem (XFS/ext4) online from the free space in the volume group when a threshold is crossed. No downtime. |
+| 🔒 **Security Audit** | Checks SELinux enforcement and SSH hardening (e.g. `PermitRootLogin`) and produces a compliance score out of 100. |
+| 🌐 **Network Telemetry** | Lists active interfaces with status, IPv4/IPv6 addresses and link speed. |
+| 🔄 **Watchdog Daemon** | Runs as a `systemd` service for continuous monitoring and incident logging to the journal. |
+| 📊 **System Telemetry** | Reports CPU, RAM, kernel, battery, SELinux and firewalld state at a glance. |
+| 🎨 **Rich CLI** | Color-coded tables and panels built with Typer and Rich. |
+
+---
+
+## Requirements
+
+- Red Hat Enterprise Linux 10 (or a compatible distribution)
+- Python 3.12 or later
+- Root privileges for LVM operations and the security audit
+- LVM2, SELinux and firewalld (for the related modules)
+
+---
+
+## Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Youssefboutaout/sentinel-rhel.git
+cd sentinel-rhel
+
+# 2. Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. Install in editable mode
+pip install -e .
+```
+
+**Optional: make `sentinel` available system-wide**
+
+```bash
+sudo ln -sf "$(pwd)/.venv/bin/sentinel" /usr/local/bin/sentinel
+```
+
+---
+
+## Usage
+
+```bash
+sentinel --help
+```
+
+| Command | Description |
+|---|---|
+| `sentinel check-all` | Run a full diagnostic across all modules |
+| `sentinel status` | System telemetry and LVM topology |
+| `sentinel heal` | Detect and extend volumes above the usage threshold |
+| `sentinel audit` | Security and CIS-style compliance audit |
+| `sentinel network` | Network interface inspection |
+
+### Examples
+
+```bash
+# Show status, flagging volumes above 80% usage
+sentinel status --threshold 80
+
+# Preview what the self-healing engine would do (no changes made)
+sentinel heal --dry-run
+
+# Extend any volume above 80% usage by 512 MiB
+sentinel heal --threshold 80 --extend-mb 512
+
+# Run the security audit
+sentinel audit
+```
+
+> ⚠️ **Note:** `sentinel heal` modifies live storage. Run it with `--dry-run` first and make sure your volume group has free extents.
+
+---
+
+## Running as a Service
+
+Deploy the watchdog as a persistent background daemon:
+
+```bash
+sudo cp sentinel-watchdog.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now sentinel-watchdog.service
+```
+
+Check its status and follow the logs:
+
+```bash
+systemctl status sentinel-watchdog.service
+journalctl -u sentinel-watchdog.service -f
+```
+
+---
+
+## Project Structure
+
+```text
+sentinel-rhel/
+├── sentinel/
+│   ├── __init__.py
+│   ├── cli.py            # Typer CLI and command definitions
+│   └── core/
+│       ├── system.py     # CPU, RAM, kernel and battery telemetry
+│       ├── lvm.py        # LVM parsing and auto-healing logic
+│       ├── network.py    # Network interface inspection
+│       ├── security.py   # SELinux and SSH hardening audit
+│       └── watchdog.py   # Daemon loop and event logging
+├── sentinel-watchdog.service
+├── pyproject.toml
+└── README.md
+```
+
+---
+
+## Tech Stack
+
+**Python** · **Typer** · **Rich** · **psutil** · **LVM2** · **systemd** · **SELinux** · **firewalld**
+
+---
+
+## Roadmap
+
+- [ ] SELinux AVC denial analysis with suggested fixes
+- [ ] Failed systemd service detection and auto-restart
+- [ ] Alerting via Telegram / email
+- [ ] YAML configuration file (`/etc/sentinel/config.yaml`)
+- [ ] Unit tests (pytest) and CI with GitHub Actions
+- [ ] Prometheus metrics export
+- [ ] RPM packaging
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome. For larger changes, please open an issue first to discuss what you would like to change.
+
+---
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for details.
+
+---
+
+## Author
+
+**Youssef Boutaout**
+Computer Science Student · Linux Systems Enthusiast
+
