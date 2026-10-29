@@ -1,12 +1,21 @@
+<div align="center">
 
 # 🛡️ Sentinel-RHEL
 
 **Autonomous infrastructure, storage and security management for Red Hat Enterprise Linux 10**
+
+![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-RHEL%2010-EE0000?logo=redhat&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Status](https://img.shields.io/badge/Status-Active%20Development-blue.svg)
+
+</div>
+
 ---
 
 ## Overview
 
-**Sentinel-RHEL** is a Python CLI tool and background daemon that automates routine Linux administration on RHEL 10. It monitors system health, extends LVM volumes before they fill up, audits security settings against CIS-style checks, and inspects network state, all from a single command-line interface.
+**Sentinel-RHEL** is a Python CLI tool and background daemon that automates routine Linux administration on RHEL 10. It monitors system health, extends LVM volumes before they fill up, audits security settings against CIS-style checks, inspects network state and visualizes the storage and directory structure, all from a single command-line interface.
 
 > **Why "Sentinel"?** It watches the system continuously and acts on problems before they become outages.
 
@@ -22,9 +31,10 @@
 | 🧠 **LVM Self-Healing** | Monitors logical volume usage and extends the volume and filesystem (XFS/ext4) online from the free space in the volume group when a threshold is crossed. No downtime. |
 | 🔒 **Security Audit** | Checks SELinux enforcement and SSH hardening (e.g. `PermitRootLogin`) and produces a compliance score out of 100. |
 | 🌐 **Network Telemetry** | Lists active interfaces with status, IPv4/IPv6 addresses and link speed. |
+| 🌳 **Infrastructure Tree** | Combines system telemetry, LVM topology and directory traversal into a single visual tree. |
 | 🔄 **Watchdog Daemon** | Runs as a `systemd` service for continuous monitoring and incident logging to the journal. |
-| 📊 **System Telemetry** | Reports CPU, RAM, kernel, battery, SELinux and firewalld state at a glance. |
-| 🎨 **Rich CLI** | Color-coded tables and panels built with Typer and Rich. |
+| 📊 **System Telemetry** | Reports CPU, RAM, kernel, uptime, load, SELinux and firewalld state at a glance. |
+| 🎨 **Rich CLI** | Color-coded tables, trees and panels built with Typer and Rich. |
 
 ---
 
@@ -69,7 +79,8 @@ sentinel --help
 | Command | Description |
 |---|---|
 | `sentinel check-all` | Run a full diagnostic across all modules |
-| `sentinel status` | System telemetry and LVM topology |
+| `sentinel tree` | Display system telemetry, LVM topology and directory tree |
+| `sentinel status` | System health, telemetry and LVM overview |
 | `sentinel heal` | Detect and extend volumes above the usage threshold |
 | `sentinel audit` | Security and CIS-style compliance audit |
 | `sentinel network` | Network interface inspection |
@@ -77,6 +88,9 @@ sentinel --help
 ### Examples
 
 ```bash
+# Display the system inspector and storage tree
+sentinel tree
+
 # Show status, flagging volumes above 80% usage
 sentinel status --threshold 80
 
@@ -107,8 +121,8 @@ sudo systemctl enable --now sentinel-watchdog.service
 Check its status and follow the logs:
 
 ```bash
-systemctl status sentinel-watchdog.service
-journalctl -u sentinel-watchdog.service -f
+sudo systemctl status sentinel-watchdog.service
+sudo journalctl -u sentinel-watchdog.service -f
 ```
 
 ---
@@ -121,7 +135,7 @@ sentinel-rhel/
 │   ├── __init__.py
 │   ├── cli.py            # Typer CLI and command definitions
 │   └── core/
-│       ├── system.py     # CPU, RAM, kernel and battery telemetry
+│       ├── system.py     # CPU, RAM, kernel, uptime and load telemetry
 │       ├── lvm.py        # LVM parsing and auto-healing logic
 │       ├── network.py    # Network interface inspection
 │       ├── security.py   # SELinux and SSH hardening audit
@@ -168,3 +182,4 @@ Distributed under the MIT License. See `LICENSE` for details.
 **Youssef Boutaout**
 Computer Science Student · Linux Systems Enthusiast
 
+[GitHub](https://github.com/Youssefboutaout)
