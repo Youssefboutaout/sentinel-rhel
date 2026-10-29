@@ -1,3 +1,4 @@
+
 <div align="center">
 
 # 🛡️ Sentinel-RHEL
@@ -15,11 +16,10 @@
 
 ## Overview
 
-**Sentinel-RHEL** is a Python CLI tool and background daemon that automates routine Linux administration on RHEL 10. It monitors system health, extends LVM volumes before they fill up, audits security settings against CIS-style checks, inspects network state and visualizes the storage and directory structure, all from a single command-line interface.
+**Sentinel-RHEL** is a Python CLI tool and background daemon that automates routine Linux administration on RHEL 10: LVM storage self-healing, CIS-style security audits, network inspection, a combined infrastructure tree and instant Telegram alerts.
 
 > **Why "Sentinel"?** It watches the system continuously and acts on problems before they become outages.
 
-<!-- Add a demo GIF or screenshot here: -->
 <!-- ![Sentinel demo](docs/demo.gif) -->
 
 ---
@@ -28,13 +28,12 @@
 
 | Module | Description |
 |---|---|
-| 🧠 **LVM Self-Healing** | Monitors logical volume usage and extends the volume and filesystem (XFS/ext4) online from the free space in the volume group when a threshold is crossed. No downtime. |
+| 🧠 **LVM Self-Healing** | Monitors logical volume usage and extends the volume and filesystem (XFS/ext4) online from the volume group's free space when a threshold is crossed. |
 | 🔒 **Security Audit** | Checks SELinux enforcement and SSH hardening (e.g. `PermitRootLogin`) and produces a compliance score out of 100. |
 | 🌐 **Network Telemetry** | Lists active interfaces with status, IPv4/IPv6 addresses and link speed. |
-| 🌳 **Infrastructure Tree** | Combines system telemetry, LVM topology and directory traversal into a single visual tree. |
+| 🌳 **Infrastructure Tree** | Combines system telemetry, LVM topology and directory traversal under mount points into one visual tree. |
+| 📱 **Telegram Alerts & Reports** | Sends instant notifications on corrective actions or emergencies, plus a full infrastructure report (`sentinel report`) straight to your phone. |
 | 🔄 **Watchdog Daemon** | Runs as a `systemd` service for continuous monitoring and incident logging to the journal. |
-| 📊 **System Telemetry** | Reports CPU, RAM, kernel, uptime, load, SELinux and firewalld state at a glance. |
-| 🎨 **Rich CLI** | Color-coded tables, trees and panels built with Typer and Rich. |
 
 ---
 
@@ -43,7 +42,8 @@
 - Red Hat Enterprise Linux 10 (or a compatible distribution)
 - Python 3.12 or later
 - Root privileges for LVM operations and the security audit
-- LVM2, SELinux and firewalld (for the related modules)
+- LVM2, SELinux and firewalld for the related modules
+- A Telegram bot token and chat ID (optional, for alerts)
 
 ---
 
@@ -70,6 +70,42 @@ sudo ln -sf "$(pwd)/.venv/bin/sentinel" /usr/local/bin/sentinel
 
 ---
 
+## Configuration
+
+Sentinel reads its settings from `/etc/sentinel/config.yaml`:
+
+```yaml
+telegram:
+  enabled: true
+  bot_token: "YOUR_BOT_TOKEN"
+  chat_id: "YOUR_CHAT_ID"
+
+watchdog:
+  interval_seconds: 60
+  threshold_percent: 80.0
+  extend_mb: 512
+```
+
+**Getting Telegram credentials**
+
+1. Message [@BotFather](https://t.me/BotFather) on Telegram, run `/newbot` and copy the token.
+2. Send any message to your new bot, then open `https://api.telegram.org/bot<TOKEN>/getUpdates` to find your `chat_id`.
+
+**Protect your token.** The config file contains a secret. Restrict it and never commit it:
+
+```bash
+sudo mkdir -p /etc/sentinel
+sudo chmod 600 /etc/sentinel/config.yaml
+```
+
+Verify the setup:
+
+```bash
+sentinel alert-test
+```
+
+---
+
 ## Usage
 
 ```bash
@@ -80,20 +116,16 @@ sentinel --help
 |---|---|
 | `sentinel check-all` | Run a full diagnostic across all modules |
 | `sentinel tree` | Display system telemetry, LVM topology and directory tree |
+| `sentinel report` | Send a full infrastructure report to Telegram |
 | `sentinel status` | System health, telemetry and LVM overview |
 | `sentinel heal` | Detect and extend volumes above the usage threshold |
 | `sentinel audit` | Security and CIS-style compliance audit |
 | `sentinel network` | Network interface inspection |
+| `sentinel alert-test` | Send a test message to verify the Telegram setup |
 
 ### Examples
 
 ```bash
-# Display the system inspector and storage tree
-sentinel tree
-
-# Show status, flagging volumes above 80% usage
-sentinel status --threshold 80
-
 # Preview what the self-healing engine would do (no changes made)
 sentinel heal --dry-run
 
@@ -102,6 +134,9 @@ sentinel heal --threshold 80 --extend-mb 512
 
 # Run the security audit
 sentinel audit
+
+# Send the infrastructure report to your phone
+sentinel report
 ```
 
 > ⚠️ **Note:** `sentinel heal` modifies live storage. Run it with `--dry-run` first and make sure your volume group has free extents.
@@ -109,8 +144,6 @@ sentinel audit
 ---
 
 ## Running as a Service
-
-Deploy the watchdog as a persistent background daemon:
 
 ```bash
 sudo cp sentinel-watchdog.service /etc/systemd/system/
@@ -139,6 +172,7 @@ sentinel-rhel/
 │       ├── lvm.py        # LVM parsing and auto-healing logic
 │       ├── network.py    # Network interface inspection
 │       ├── security.py   # SELinux and SSH hardening audit
+│       ├── alerts.py     # Telegram alerts and reports
 │       └── watchdog.py   # Daemon loop and event logging
 ├── sentinel-watchdog.service
 ├── pyproject.toml
@@ -149,17 +183,18 @@ sentinel-rhel/
 
 ## Tech Stack
 
-**Python** · **Typer** · **Rich** · **psutil** · **LVM2** · **systemd** · **SELinux** · **firewalld**
+**Python** · **Typer** · **Rich** · **psutil** · **LVM2** · **systemd** · **SELinux** · **firewalld** · **Telegram Bot API**
 
 ---
 
 ## Roadmap
 
-- [ ] SELinux AVC denial analysis with suggested fixes
+- [ ] Alert cooldown to avoid repeated notifications
 - [ ] Failed systemd service detection and auto-restart
-- [ ] Alerting via Telegram / email
-- [ ] YAML configuration file (`/etc/sentinel/config.yaml`)
+- [ ] Heal history in SQLite (`sentinel history`)
+- [ ] SELinux AVC denial analysis with suggested fixes
 - [ ] Unit tests (pytest) and CI with GitHub Actions
+- [ ] REST API (FastAPI) and web dashboard
 - [ ] Prometheus metrics export
 - [ ] RPM packaging
 
