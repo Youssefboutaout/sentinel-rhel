@@ -1,0 +1,6 @@
+psutil
+typer
+rich
+fastapi
+uvicorn
+pydantic

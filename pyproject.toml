@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sentinel-rhel"
+version = "0.1.0"
+description = "Autonomous Self-Healing Linux Infrastructure & LVM Storage Platform for RHEL 10"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Youssef Boutaout"}
+]
+dependencies = [
+    "psutil",
+    "typer",
+    "rich",
+    "fastapi",
+    "uvicorn",
+    "pydantic"
+]
+
+[project.scripts]
+sentinel = "sentinel.cli:app"
