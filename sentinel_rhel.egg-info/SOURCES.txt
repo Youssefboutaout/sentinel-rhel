@@ -4,7 +4,10 @@ sentinel/__init__.py
 sentinel/cli.py
 sentinel/core/__init__.py
 sentinel/core/lvm.py
+sentinel/core/network.py
+sentinel/core/security.py
 sentinel/core/system.py
+sentinel/core/watchdog.py
 sentinel_rhel.egg-info/PKG-INFO
 sentinel_rhel.egg-info/SOURCES.txt
 sentinel_rhel.egg-info/dependency_links.txt
