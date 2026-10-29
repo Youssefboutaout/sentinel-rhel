@@ -3,6 +3,7 @@ pyproject.toml
 sentinel/__init__.py
 sentinel/cli.py
 sentinel/core/__init__.py
+sentinel/core/alerts.py
 sentinel/core/lvm.py
 sentinel/core/network.py
 sentinel/core/security.py

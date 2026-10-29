@@ -245,3 +245,62 @@ def display_tree():
                     add_directory_tree(lv_branch, target_path, depth=1, max_depth=2)
 
     console.print(root_tree)
+from sentinel.core.alerts import send_alert
+
+@app.command(name="alert-test")
+def alert_test():
+    """Send a test notification to Telegram to verify configuration."""
+    success = send_alert("Test notification from Sentinel-RHEL daemon. All systems operational!", level="INFO")
+    if success:
+        console.print("[bold green]✅ Telegram alert sent successfully![/bold green]")
+    else:
+        console.print("[bold red]❌ Failed to send alert. Check /etc/sentinel/config.yaml and ensure telegram is enabled.[/bold red]")
+from sentinel.core.system import get_system_summary
+from sentinel.core.lvm import get_volume_groups, get_logical_volumes
+from sentinel.core.network import get_network_interfaces
+from sentinel.core.security import get_security_audit
+
+@app.command(name="report")
+def send_system_report():
+    """Generate and send a comprehensive system configuration and status report via Telegram."""
+    console.print("[bold cyan]📊 Generating comprehensive RHEL 10 system report...[/bold cyan]")
+    
+    sys_info = get_system_summary()
+    vgs = get_volume_groups()
+    lvs = get_logical_volumes()
+    interfaces = get_network_interfaces()
+    sec = get_security_audit()
+
+    # Construction du message Markdown pour Telegram
+    report_msg = (
+        f"🖥️ *RHEL 10 Infrastructure Report*\n\n"
+        f"📋 *System & OS Info*\n"
+        f"• *OS:* {sys_info['os_release']}\n"
+        f"• *Hostname:* {sys_info['hostname']}\n"
+        f"• *Kernel:* {sys_info['kernel']} ({sys_info['architecture']})\n"
+        f"• *Uptime:* {sys_info['uptime']} | *Load:* {sys_info['load_avg']}\n"
+        f"• *CPU:* {sys_info['cpu_cores']} vCPUs (Usage: {sys_info['cpu_usage']})\n"
+        f"• *RAM:* {sys_info['ram_usage']}\n\n"
+        f"🔒 *Security & Compliance*\n"
+        f"• *CIS Score:* {sec['score']}/100\n"
+        f"• *SELinux:* {sys_info['selinux']}\n"
+        f"• *Firewalld:* {sys_info['firewalld']}\n\n"
+        f"💾 *Storage Topology (LVM)*\n"
+    )
+
+    for vg in vgs:
+        report_msg += f"• *VG {vg['vg_name']}:* Total {vg['vg_size']} (Free: {vg['vg_free']})\n"
+    
+    for lv in lvs:
+        report_msg += f"  - `[LV]` {lv['lv_name']} ➔ {lv['mountpoint']} ({lv['size']}, {lv['usage']})\n"
+
+    report_msg += f"\n🌐 *Network Interfaces*\n"
+    for iface in interfaces[:3]: # Limiter aux 3 principales pour garder un message lisible
+        report_msg += f"• *{iface.get('name', 'N/A')}:* {iface.get('state', 'N/A')} | IPv4: {iface.get('ipv4', 'N/A')}\n"
+
+    # Envoi via Telegram
+    success = send_alert(report_msg, level="INFO")
+    if success:
+        console.print("[bold green]✅ Comprehensive system report successfully sent to Telegram![/bold green]")
+    else:
+        console.print("[bold red]❌ Failed to send report. Check Telegram configuration in /etc/sentinel/config.yaml[/bold red]")
